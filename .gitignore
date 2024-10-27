@@ -11,3 +11,9 @@ __pycache__/
 *.pyc
 
 .DS_Store
+venv/
+.DS_Store
+*.dylib
+venv/
+.DS_Store
+*.dylib
