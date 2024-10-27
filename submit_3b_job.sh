@@ -1,18 +1,19 @@
 #!/bin/bash
-# OAR options for Grid'5000 cluster
-#OAR -l nodes=1,walltime=02:00:00  # Specify one node and 2 hours wall time
-#OAR -n llama_3b_training_job       # Name of the job
+#OAR -l nodes=1/gpu=4,walltime=12:00:00  
+#OAR -n llama_3b_training_full 
 
-# Set paths for data and output directories
-export DATA_PATH="./Llama3.2/3b/data"
-export OUTPUT_PATH="./Llama3.2/3b/output"
+cd $WORKDIR
 
-# Load necessary modules if the cluster requires it (example: loading Python)
-module load python/3.8  # Adjust the Python version if necessary
+git clone git@github.com:cathK1/Llama3.2ToM.git
+cd Llama3.2ToM
 
-# Activate the virtual environment
-source venv/bin/activate
+export DATA_PATH="$WORKDIR/Llama3.2ToM/Llama3.2/3b/data"
+export OUTPUT_PATH="$WORKDIR/Llama3.2ToM/Llama3.2/3b/output"
 
-# Run the Python script
+mkdir -p $OUTPUT_PATH
+
+module load python/3.8 
+
+source $WORKDIR/Llama3.2ToM/venv/bin/activate
+
 python Llama3.2/3b/llama_3b.py
-
