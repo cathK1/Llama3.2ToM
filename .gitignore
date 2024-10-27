@@ -1,0 +1,12 @@
+# Ignore virtual environment
+venv/
+
+# Ignore large library files
+*.dylib
+*.so
+*.dll
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
