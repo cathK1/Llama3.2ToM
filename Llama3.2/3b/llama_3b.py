@@ -17,53 +17,60 @@ def question_from_row(row):
     ### ANSWER:"""
     return prompt
 
-def save_in_json(json_str):
-    if not os.path.isfile("Llama3.2ToM/llama3.2_1b_experience_1_results.json"):
-        with open("Llama3.2ToM/llama3.2_1b_experience_1_results.json", "w") as f:
+def save_in_json(json_str, output_path):
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+
+    results_file = os.path.join(output_path, "llama3.2_3b_results.json")
+
+    if not os.path.isfile(results_file):
+        with open(results_file, "w") as f:
             json.dump([], f)
 
-    with open("Llama3.2ToM/llama3.2_1b_experience_1_results.json", "r") as f:
+    with open(results_file, "r") as f:
         json_content = json.load(f)
 
     json_content.append(json_str)
         
-    with open("Llama3.2ToM/llama3.2_1b_experience_1_results.json", "w") as f:
+    with open(results_file, "w") as f:
         json.dump(json_content, f, ensure_ascii=False, indent=4)
 
 
 if __name__ == "__main__":
-    files = os.listdir("Llama3.2ToM/data")
+    data_path = os.getenv("DATA_PATH", "./data") 
+    output_path = os.getenv("OUTPUT_PATH", "./output")  
+    
+
+    files = os.listdir(data_path)
     json_files = [file for file in files if file.endswith(".jsonl")]
 
-    model_id = "meta-llama/Llama-3.2-1B"
+    print("JSON files found:", json_files)
+
+    model_id = "meta-llama/Llama-3.2-3B"
     model = AutoModelForCausalLM.from_pretrained(model_id)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     
     for file in tqdm(json_files):
         task = file.split(".")[0]
-        with open(f"Llama3.2ToM/data/{file}", "r", encoding='utf-8') as f:
+        with open(os.path.join(data_path, file), "r", encoding='utf-8') as f:
             data = [json.loads(line) for line in f.readlines()]
-
+            print(f"Loaded {len(data)} rows from {file}")
         
         for row in tqdm(data):
             prompt = question_from_row(row)
-            # print("Prompt:\n", prompt)
-    
             input_ids = tokenizer(prompt, return_tensors="pt").input_ids
-    
+
             with torch.no_grad():
-                final_logits = model(input_ids).logits[0,-1]
+                final_logits = model(input_ids).logits[0, -1]
             answer_idxs = torch.tensor([tokenizer.encode(l)[-1] for l in 'ABCD'])
             answer_logits = final_logits[answer_idxs]
             answer_probs = final_logits.softmax(dim=0)[answer_idxs]
-    
-            # print('Answer probs (all):', answer_probs)
-            # print('Predicted answer:', "ABCD"[answer_probs.argmax()])
-            # print('True answer:', row['答案\nANSWER'])
-    
-            json_str = {"file": file,
-                        "prompt": prompt,
-                        "predicted": "ABCD"[answer_probs.argmax()],
-                        "true": row['答案\nANSWER']}
-    
-            save_in_json(json_str)
+
+            json_str = {
+                "file": file,
+                "prompt": prompt,
+                "predicted": "ABCD"[answer_probs.argmax()],
+                "true": row['答案\nANSWER']
+            }
+
+            save_in_json(json_str, output_path)
