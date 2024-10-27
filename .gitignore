@@ -10,10 +10,6 @@ venv/
 __pycache__/
 *.pyc
 
+# Ignore macOS-specific system files
 .DS_Store
-venv/
-.DS_Store
-*.dylib
-venv/
-.DS_Store
-*.dylib
+
